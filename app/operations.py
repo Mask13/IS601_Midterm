@@ -23,7 +23,6 @@ class Operations:
 
 class Addition:
     """Class to perform addition operations."""
-
     def execute(self, a: Decimal, b: Decimal) -> Decimal:
         """Executes the addition operation."""
         self.validate_operands(a, b)
