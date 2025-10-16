@@ -1,118 +1,178 @@
 from abc import ABC, abstractmethod
 from decimal import Decimal
-from typing import Dict
+from typing import Any
 
-class Operations:
-    """Class to perform basic arithmetic operations."""
+
+"""Operations module
+
+This module defines an abstract base class `Operations` and several concrete
+arithmetic operation classes. Each concrete class implements `execute` and
+uses `validate_operands` to ensure inputs are appropriate for the operation.
+"""
+
+
+class Operations(ABC):
+    """Abstract base class for arithmetic operations.
+
+    Methods
+    -------
+    execute(a, b)
+        Perform the operation and return the result. Must be implemented by
+        concrete subclasses.
+
+    validate_operands(a, b)
+        Default validation that checks operand types. Subclasses should call
+        `super().validate_operands(a, b)` and then perform operation-specific
+        checks (for example, non-zero divisor for division).
+    """
 
     @abstractmethod
-    def execute(self, a: Decimal, b: Decimal) -> Decimal:
-        """Executes the given operation with the provided operands."""
-        pass
-    
-    @abstractmethod
-    def validate_operands(self, a: Decimal, b: Decimal) -> None:
-        """Validates that the operands are what is required for the operation."""
-        pass
+    def execute(self, a: Any, b: Any) -> Any:
+        """Execute the operation and return the computed value.
 
-    @abstractmethod
+        Parameters
+        ----------
+        a, b : numeric
+            Operands for the operation. Concrete implementations should accept
+            Decimal or native numeric types and return the appropriate type.
+        """
+
+    def validate_operands(self, a: Any, b: Any) -> None:
+        """Default validation for operands.
+
+        Checks that both operands are instances of int, float, or Decimal.
+        Subclasses can call this method and then add further restrictions.
+        Raises a TypeError if validation fails.
+        """
+        allowed = (int, float, Decimal)
+        if not isinstance(a, allowed) or not isinstance(b, allowed):
+            raise TypeError("Operands must be numeric types (int, float, Decimal)")
+
     def __str__(self) -> str:
-        """Returns the name of the operation."""
+        """Return the human-friendly name of the operation class."""
         return self.__class__.__name__
 
 
-class Addition:
-    """Class to perform addition operations."""
-    def execute(self, a: Decimal, b: Decimal) -> Decimal:
-        """Executes the addition operation."""
-        self.validate_operands(a, b)
-        return a+b
+class Addition(Operations):
+    """Perform addition (a + b)."""
 
-class Subtraction:
-    """Class to perform subtraction operations."""
     def execute(self, a: Decimal, b: Decimal) -> Decimal:
-        """Executes the subtraction operation."""
+        """Return the sum of `a` and `b` after validating operands."""
         self.validate_operands(a, b)
-        return a-b
+        return a + b
 
-class Multiplication:
-    """Class to perform multiplication operations."""
+
+class Subtraction(Operations):
+    """Perform subtraction (a - b)."""
+
     def execute(self, a: Decimal, b: Decimal) -> Decimal:
-        """Executes the multiplication operation."""
+        """Return the result of subtracting `b` from `a`."""
         self.validate_operands(a, b)
-        return a*b
+        return a - b
 
-class Division:
-    """Class to perform division operations."""
+
+class Multiplication(Operations):
+    """Perform multiplication (a * b)."""
+
+    def execute(self, a: Decimal, b: Decimal) -> Decimal:
+        """Return the product of `a` and `b`."""
+        self.validate_operands(a, b)
+        return a * b
+
+
+class Division(Operations):
+    """Perform division (a / b).
+
+    The `validate_operands` method ensures that `b` is not zero in addition
+    to the default type checks from the base class.
+    """
+
     def validate_operands(self, a: Decimal, b: Decimal) -> None:
-        """Validates that the divisor is not zero."""
+        """Ensure operands are numeric and divisor is not zero."""
         super().validate_operands(a, b)
         if b == 0:
             raise ZeroDivisionError("Cannot divide by zero.")
 
     def execute(self, a: Decimal, b: Decimal) -> Decimal:
-        """Executes the division operation."""
+        """Return the division result of `a` by `b`."""
         self.validate_operands(a, b)
-        return a/b
+        return a / b
 
-class Power:
-    """Class to perform power operations."""
+
+class Power(Operations):
+    """Perform exponentiation (a ** b)."""
+
     def validate_operands(self, a: Decimal, b: Decimal) -> None:
-        """Validates that the exponent is not negative."""
+        """Check base/exponent types and that exponent is non-negative."""
         super().validate_operands(a, b)
         if b < 0:
             raise ValueError("Exponent must be non-negative.")
-    def execute(self, a: Decimal, b: Decimal) -> Decimal:
-        """Executes the power operation."""
-        self.validate_operands(a, b)
-        return a**b
 
-class Root:
-    """Class to perform root operations."""
+    def execute(self, a: Decimal, b: Decimal) -> Decimal:
+        """Return `a` raised to the power `b`."""
+        self.validate_operands(a, b)
+        return a ** b
+
+
+class Root(Operations):
+    """Compute the b-th root of a (a ** (1 / b))."""
+
     def validate_operands(self, a: Decimal, b: Decimal) -> None:
-        """Validates that the root degree is positive and non-zero."""
+        """Ensure degree is positive and operands are numeric."""
         super().validate_operands(a, b)
         if b <= 0:
             raise ValueError("Root degree must be positive and non-zero.")
-    def execute(self, a: Decimal, b: Decimal) -> Decimal:
-        """Executes the root operation."""
-        self.validate_operands(a, b)
-        return a**(1/b)
 
-class Modulus:
-    """Class to perform modulus operations."""
     def execute(self, a: Decimal, b: Decimal) -> Decimal:
-        """Executes the modulus operation."""
+        """Return the b-th root of a."""
         self.validate_operands(a, b)
-        return a%b
+        return a ** (1 / b)
 
-class Integer_Division:
-    """Class to perform integer division operations."""
-    def validate_operands(self, a: int, b: int) -> None:
-        """Validates that the divisor is not zero."""
+
+class Modulus(Operations):
+    """Compute the modulus (a % b)."""
+
+    def execute(self, a: Decimal, b: Decimal) -> Decimal:
+        """Return the remainder of `a` divided by `b`."""
+        self.validate_operands(a, b)
+        return a % b
+
+
+class Integer_Division(Operations):
+    """Perform integer division (a // b). Only accepts integers."""
+
+    def validate_operands(self, a: Any, b: Any) -> None:
+        """Require integer operands and non-zero divisor."""
+        if not isinstance(a, int) or not isinstance(b, int):
+            raise TypeError("Integer_Division requires integer operands")
         if b == 0:
             raise ZeroDivisionError("Cannot perform integer division by zero.")
-    
+
     def execute(self, a: int, b: int) -> int:
-        """Executes the integer division operation."""
+        """Return integer division result of `a // b`."""
         self.validate_operands(a, b)
-        return a//b
-    
-class Percent_Calculation:
-    """Class to perform percentage calculations."""
+        return a // b
+
+
+class Percent_Calculation(Operations):
+    """Calculate percentage (a / b * 100)."""
+
     def validate_operands(self, a: Decimal, b: Decimal) -> None:
-        """Validates that the base is not zero."""
+        """Ensure operands are numeric and denominator is not zero."""
         super().validate_operands(a, b)
         if b == 0:
             raise ZeroDivisionError("Cannot calculate percentage with a base of zero.")
-    
+
     def execute(self, a: Decimal, b: Decimal) -> Decimal:
-        """Executes the percentage calculation."""
+        """Return the percentage value of a relative to b (a / b * 100)."""
         self.validate_operands(a, b)
         return (a / b) * 100
-    
-class Absolute_Difference:
-    """Class to perform absolute difference calculations."""
+
+
+class Absolute_Difference(Operations):
+    """Compute absolute difference between `a` and `b`."""
+
     def execute(self, a: Decimal, b: Decimal) -> Decimal:
-        """Executes the absolute difference calculation."""
+        """Return absolute value of (a - b)."""
+        self.validate_operands(a, b)
         return abs(a - b)
