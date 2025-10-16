@@ -10,11 +10,11 @@ class InputValidator:
     def validate_number(value: Any, config: CalculatorConfig) -> Decimal:
         """Validates that the input is a number and within the allowed range."""
         try:
-            num = Decimal(value)
-        except (InvalidOperation, ValueError):
-            raise ValidationError(f"Invalid number: {value}")
-
-        if abs(num) > config.max_input_value:
-            raise ValidationError(f"Input {num} exceeds maximum allowed value of {config.max_input_value}")
-
-        return num
+            if isinstance(value, str):
+                value = value.strip()
+            number = Decimal(str(value))
+            if abs(number) > config.max_input_value:
+                raise ValidationError(f"Value exceeds maximum allowed: {config.max_input_value}")
+            return number.normalize()
+        except InvalidOperation as e:
+            raise ValidationError(f"Invalid number format: {value}") from e
