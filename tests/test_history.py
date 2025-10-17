@@ -1,4 +1,5 @@
 from decimal import Decimal
+import pytest
 from pathlib import Path
 import os
 
@@ -129,3 +130,48 @@ def test_save_empty_history_creates_file(tmp_path: Path):
     # file should contain headers
     text = cfg.history_file.read_text()
     assert "operation" in text and "operands" in text
+
+
+def test_append_with_no_max_size_keeps_all(tmp_path: Path):
+    cfg = CalculatorConfig(base_dir=tmp_path)
+    hm = HistoryManager(cfg)
+
+    # append 5 items with max_size=None (no trimming)
+    for i in range(5):
+        calc = Calculation(operation=f"Op{i}", operands={"a": d(i), "b": d(i)}, result=d(i + i))
+        hm.append(calc, max_size=None)
+
+    loaded = hm.load_history()
+    assert len(loaded) == 5
+
+
+def test_append_non_calculation_raises(tmp_path: Path):
+    cfg = CalculatorConfig(base_dir=tmp_path)
+    hm = HistoryManager(cfg)
+
+    with pytest.raises(Exception):
+        hm.append("not-a-calculation", max_size=10)
+
+
+def test_save_history_parent_is_file_raises(tmp_path: Path):
+    cfg = CalculatorConfig(base_dir=tmp_path)
+    # create a file where the history directory should be BEFORE creating the manager
+    history_dir = cfg.history_dir
+    # ensure parent exists
+    history_dir.parent.mkdir(parents=True, exist_ok=True)
+    # create a file with the same name as the intended directory
+    history_dir.write_text("I am a file, not a directory")
+
+    calc = Calculation(operation="X", operands={"a": d(1), "b": d(2)}, result=d(3))
+
+    # Either HistoryManager initialization will fail (because os.makedirs can't make a dir where a file exists),
+    # or initialization may succeed but save_history will raise when attempting to write. Accept either.
+    try:
+        hm = HistoryManager(cfg)
+    except Exception:
+        # expected — cannot create history manager when path is a file
+        return
+
+    # If we got here, manager was created; saving should fail
+    with pytest.raises(Exception):
+        hm.save_history([calc])
