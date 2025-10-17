@@ -137,3 +137,59 @@ class Calculator:
             # Log and raise operation errors for any other exceptions
             logging.error(f"Operation failed: {str(e)}")
             raise OperationError(f"Operation failed: {str(e)}")
+
+    def clear_history(self, persist: Optional[bool] = None) -> None:
+        """
+        Clear the in-memory calculation history.
+
+        By default this clears only the in-memory history. If `persist=True` the
+        persisted history file will also be cleared (overwritten with an empty
+        history). This prevents accidental loss of saved history when calling
+        clear interactively.
+        """
+        self.history = []
+        # If persist not provided, use configuration default
+        if persist is None:
+            persist = bool(self.config.clear_persist_by_default)
+
+        if persist:
+            try:
+                self.history_manager.save_history(self.history)
+                logging.info("Calculation history cleared and persisted to disk")
+                # Provide immediate user feedback when used interactively
+                print("Calculation history cleared and persisted to disk")
+            except Exception as e:
+                logging.error(f"Failed to clear persisted history: {e}")
+                raise OperationError(f"Failed to clear persisted history: {e}")
+        else:
+            logging.info("In-memory calculation history cleared (not persisted)")
+            print("In-memory calculation history cleared (not persisted)")
+    
+    def load_history(self) -> None:
+        """
+        Load calculation history from the CSV file into memory.
+        """
+        try:
+            self.history = self.history_manager.load_history()
+            logging.info("Calculation history loaded from disk")
+        except Exception as e:
+            logging.error(f"Failed to load history from disk: {e}")
+            raise OperationError(f"Failed to load history from disk: {e}")
+    
+    def save_history(self) -> None:
+        """
+        Save the in-memory calculation history to the CSV file.
+        """
+        try:
+            self.history_manager.save_history(self.history)
+            logging.info("Calculation history saved to disk")
+        except Exception as e:
+            logging.error(f"Failed to save history to disk: {e}")
+            raise OperationError(f"Failed to save history to disk: {e}")
+    
+    def show_history(self) -> List[Calculation]:
+        """
+        Return the in-memory calculation history.
+        """
+        return self.history
+    
