@@ -3,7 +3,8 @@
 
 #Starts the calculator application by creating an instance of the CalculatorUI class.
 
-from app.calculatorUI import CalculatorUI
+from app.calculatorUI import calculator_repl
 
 if __name__ == "__main__":
-    CalculatorUI()
+    #make calculator UI REPL and start it
+    calculator_repl()
