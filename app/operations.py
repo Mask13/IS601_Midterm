@@ -176,3 +176,40 @@ class Absolute_Difference(Operations):
         """Return absolute value of (a - b)."""
         self.validate_operands(a, b)
         return abs(a - b)
+
+
+class OperationFactory:
+    """Simple factory/registry for operation classes.
+
+    Use `create_operation(name)` to get an instance and `list_operations()`
+    to retrieve available CLI names.
+    """
+    _registry = {
+        "add": Addition,
+        "subtract": Subtraction,
+        "multiply": Multiplication,
+        "divide": Division,
+        "power": Power,
+        "root": Root,
+        "modulus": Modulus,
+        "integer-division": Integer_Division,
+        "percent": Percent_Calculation,
+        "absolute-difference": Absolute_Difference,
+    }
+
+    @classmethod
+    def normalize_name(cls, name: str) -> str:
+        return name.strip().lower().replace(" ", "-").replace("_", "-")
+
+    @classmethod
+    def create_operation(cls, name: str):
+        """Return a new instance of the requested operation or raise KeyError."""
+        nm = cls.normalize_name(name)
+        if nm not in cls._registry:
+            raise KeyError(f"Unknown operation: {name}")
+        return cls._registry[nm]()
+
+    @classmethod
+    def list_operations(cls):
+        """Return a sorted list of registered operation names."""
+        return sorted(cls._registry.keys())
