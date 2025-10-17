@@ -1,9 +1,8 @@
 from dataclasses import dataclass, field
 import datetime
-from decimal import Decimal, InvalidOperation
-import logging
+from decimal import Decimal
 from typing import Any, Dict
-from app.exceptions import OperationError
+
 
 @dataclass
 class Calculation:
