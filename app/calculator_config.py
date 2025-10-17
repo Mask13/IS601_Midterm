@@ -34,7 +34,8 @@ class CalculatorConfig:
         auto_save: Optional[bool] = None,
         precision: Optional[int] = None,
         max_input_value: Optional[Number] = None,
-        default_encoding: Optional[str] = None
+        default_encoding: Optional[str] = None,
+        clear_persist_by_default: Optional[bool] = None
     ):
         """ Set default values from environment variables or use provided values """
         #root dir
@@ -67,6 +68,12 @@ class CalculatorConfig:
         # Default encoding for file operations
         self.default_encoding = default_encoding or os.getenv(
             'CALCULATOR_DEFAULT_ENCODING', 'utf-8'
+        )
+
+        # Whether `clear` should also persist the cleared history by default
+        clear_persist_env = os.getenv('CALCULATOR_CLEAR_PERSIST', 'false').lower()
+        self.clear_persist_by_default = clear_persist_by_default if clear_persist_by_default is not None else (
+            clear_persist_env == 'true' or clear_persist_env == '1'
         )
 
     @property
