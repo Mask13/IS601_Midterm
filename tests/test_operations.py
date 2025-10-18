@@ -113,3 +113,49 @@ def test_percent_zero_denominator_raises():
 def test_str_returns_class_name():
     op = Addition()
     assert str(op) == "Addition"
+
+
+from app.operations import OperationFactory
+
+
+def test_operation_factory_normalize_name():
+    assert OperationFactory.normalize_name("  Add ") == "add"
+    assert OperationFactory.normalize_name("sub_tract") == "sub-tract"
+
+
+def test_operation_factory_create_operation_unknown():
+    with pytest.raises(KeyError):
+        OperationFactory.create_operation("unknown_op")
+
+
+def test_operation_factory_list_operations():
+    expected_operations = sorted([
+        "add",
+        "subtract",
+        "multiply",
+        "divide",
+        "power",
+        "root",
+        "modulus",
+        "integer-division",
+        "percent",
+        "absolute-difference",
+    ])
+    assert OperationFactory.list_operations() == expected_operations
+
+
+@pytest.mark.parametrize("op_name, op_class", [
+    ("add", Addition),
+    ("subtract", Subtraction),
+    ("multiply", Multiplication),
+    ("divide", Division),
+    ("power", Power),
+    ("root", Root),
+    ("modulus", Modulus),
+    ("integer-division", Integer_Division),
+    ("percent", Percent_Calculation),
+    ("absolute-difference", Absolute_Difference),
+])
+def test_operation_factory_create_operation(op_name, op_class):
+    op = OperationFactory.create_operation(op_name)
+    assert isinstance(op, op_class)
