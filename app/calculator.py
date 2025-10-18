@@ -51,6 +51,8 @@ class Calculator:
         self.history: List[Calculation] = []
         self.history_manager = HistoryManager(self.config)
         self.operation_strategy: Optional[Operations] = None
+        self._undo_stack: List[List[Calculation]] = []
+        self._redo_stack: List[List[Calculation]] = []
 
         # Load existing history from disk into memory
         try:
@@ -86,6 +88,38 @@ class Calculator:
         self.operation_strategy = operation
         logging.info(f"Set operation: {operation}")
 
+    def _save_to_undo_stack(self):
+        """Saves a copy of the current history to the undo stack (Memento pattern)."""
+        self._undo_stack.append(self.history[:])
+
+    def undo(self) -> bool:
+        """Reverts the last state change from the undo stack."""
+        if not self._undo_stack:
+            return False  # Nothing to undo
+
+        # Save current state for redo
+        self._redo_stack.append(self.history[:])
+
+        # Restore previous state from undo stack
+        last_state = self._undo_stack.pop()
+        self.history = last_state
+        logging.info("Undo operation performed.")
+        return True
+
+    def redo(self) -> bool:
+        """Re-applies the last undone state change from the redo stack."""
+        if not self._redo_stack:
+            return False  # Nothing to redo
+
+        # Save current state for undo
+        self._undo_stack.append(self.history[:])
+
+        # Restore next state from redo stack
+        next_state = self._redo_stack.pop()
+        self.history = next_state
+        logging.info("Redo operation performed.")
+        return True
+
     def perform_operation(
         self,
         a: Union[str, Number],
@@ -113,8 +147,9 @@ class Calculator:
                 result=result
             )
 
-            #TODO - Save the current state to the undo stack before making changes
-            #TODO - Clear the redo stack since new operation invalidates the redo history
+            # Memento: Save state before modification and clear redo stack
+            self._save_to_undo_stack()
+            self._redo_stack.clear()
 
             # Append the new calculation to the in-memory history
             self.history.append(calculation)
@@ -147,6 +182,10 @@ class Calculator:
         history). This prevents accidental loss of saved history when calling
         clear interactively.
         """
+        # Memento: Save state before clearing
+        self._save_to_undo_stack()
+        self._redo_stack.clear()
+
         self.history = []
         # If persist not provided, use configuration default
         if persist is None:
@@ -169,6 +208,10 @@ class Calculator:
         """
         Load calculation history from the CSV file into memory.
         """
+        # Memento: Save state before loading new history
+        self._save_to_undo_stack()
+        self._redo_stack.clear()
+
         try:
             self.history = self.history_manager.load_history()
             logging.info("Calculation history loaded from disk")
