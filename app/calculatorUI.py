@@ -65,7 +65,7 @@ def calculator_repl():
                     else:
                         print("\nCalculation History:")
                         for i, entry in enumerate(history, 1):
-                            print(f"{i}. {entry}")
+                            print(f"{i}. {entry.to_string()}")
                     continue # pragma: no cover
 
                 if command == 'clear':
@@ -73,6 +73,20 @@ def calculator_repl():
                     calc.clear_history()
                     print("History cleared")
                     continue # pragma: no cover
+
+                if command == 'undo':
+                    if calc.undo():
+                        print("Last operation undone.")
+                    else:
+                        print("Nothing to undo.")
+                    continue
+
+                if command == 'redo':
+                    if calc.redo():
+                        print("Last undone operation redone.")
+                    else:
+                        print("Nothing to redo.")
+                    continue
 
                 if command == 'save':
                     # Save calculation history to file
@@ -112,11 +126,14 @@ def calculator_repl():
                         # Perform the calculation
                         result = calc.perform_operation(a, b)
 
-                        # Normalize the result if it's a Decimal
-                        if isinstance(result, Decimal):
-                            result = result.normalize()
+                        # Format the result to avoid scientific notation for integers
+                        def format_decimal(d):
+                            if isinstance(d, Decimal):
+                                s = f"{d:f}"
+                                return s.rstrip('0').rstrip('.') if '.' in s else s
+                            return d
 
-                        print(f"\nResult: {result}")
+                        print(f"\nResult: {format_decimal(result)}")
                     except (ValidationError, OperationError) as e:
                         # Handle known exceptions related to validation or operation errors
                         print(f"Error: {e}")
