@@ -154,9 +154,13 @@ class Calculator:
             # Append the new calculation to the in-memory history
             self.history.append(calculation)
 
-            # Persist the new calculation to CSV, trimming to max size
+            # Trim in-memory history if it exceeds the configured max size
+            if self.config.max_history_size is not None and len(self.history) > self.config.max_history_size:
+                self.history = self.history[-self.config.max_history_size:]
+
+            # Persist the updated history to disk
             try:
-                self.history_manager.append(calculation, self.config.max_history_size)
+                self.save_history()
             except Exception as e:
                 logging.warning(f"Failed to persist calculation to history: {e}")
 
@@ -182,11 +186,12 @@ class Calculator:
         history). This prevents accidental loss of saved history when calling
         clear interactively.
         """
-        # Memento: Save state before clearing
-        self._save_to_undo_stack()
-        self._redo_stack.clear()
-
+        # Memento: Save state before clearing, but only if there's something to save.
+        if self.history:
+            self._save_to_undo_stack()
+            self._redo_stack.clear()
         self.history = []
+        
         # If persist not provided, use configuration default
         if persist is None:
             persist = bool(self.config.clear_persist_by_default)
@@ -194,25 +199,24 @@ class Calculator:
         if persist:
             try:
                 self.history_manager.save_history(self.history)
-                logging.info("Calculation history cleared and persisted to disk")
-                # Provide immediate user feedback when used interactively
-                print("Calculation history cleared and persisted to disk")
+                logging.info("Calculation history cleared and persisted.")
             except Exception as e:
                 logging.error(f"Failed to clear persisted history: {e}")
                 raise OperationError(f"Failed to clear persisted history: {e}")
         else:
-            logging.info("In-memory calculation history cleared (not persisted)")
-            print("In-memory calculation history cleared (not persisted)")
+            logging.info("In-memory calculation history cleared.")
     
     def load_history(self) -> None:
         """
         Load calculation history from the CSV file into memory.
         """
-        # Memento: Save state before loading new history
-        self._save_to_undo_stack()
-        self._redo_stack.clear()
-
         try:
+            # Memento: Save state before loading new history
+            # This should be inside the try block. If loading fails, we don't want to
+            # have a memento of a failed state change.
+            self._save_to_undo_stack()
+            self._redo_stack.clear()
+
             self.history = self.history_manager.load_history()
             logging.info("Calculation history loaded from disk")
         except Exception as e:

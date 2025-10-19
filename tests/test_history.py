@@ -85,21 +85,11 @@ def test_load_history_read_failure(tmp_path: Path, monkeypatch):
     # Create a file that will cause pandas to raise when reading
     cfg.history_file.write_text("not,a,valid,csv")
 
-    # Monkeypatch pd.read_csv to raise
-    import pandas as pd
-    original_read_csv = pd.read_csv
-
-    def fake_read_csv(*args, **kwargs):
-        raise ValueError("bad csv")
-
-    monkeypatch.setattr(pd, "read_csv", fake_read_csv)
-
-    try:
-        loaded = hm.load_history()
-        assert loaded == []
-    finally:
-        monkeypatch.setattr(pd, "read_csv", original_read_csv)
-
+    # Patch pd.read_csv to raise an exception and verify it's caught and re-raised.
+    with monkeypatch.context() as m:
+        m.setattr("pandas.read_csv", lambda *args, **kwargs: (_ for _ in ()).throw(ValueError("bad csv")))
+        with pytest.raises(ValueError, match="bad csv"):
+            hm.load_history()
 
 def test_skip_malformed_rows(tmp_path: Path):
     cfg = CalculatorConfig(base_dir=tmp_path)

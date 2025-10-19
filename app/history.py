@@ -31,9 +31,9 @@ class HistoryManager:
 
         try:
             df = pd.read_csv(self.path)
-        except Exception:
+        except Exception as e:
             # If reading fails, return empty history to avoid crashing the app
-            return []
+            raise e
 
         history: List[Calculation] = []
         for _, row in df.iterrows():

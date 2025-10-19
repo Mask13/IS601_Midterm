@@ -1,7 +1,6 @@
 """
 Tests for the calculator's command-line REPL in calculatorUI.py.
 """
-
 import pytest
 from unittest.mock import MagicMock, call
 from app import calculatorUI
@@ -69,6 +68,22 @@ def test_repl_help_command(monkeypatch, capsys):
     assert "subtract" in captured.out
     assert "multiply" in captured.out
     assert "history - Show calculation history" in captured.out
+
+
+def test_repl_help_command_op_factory_fails(monkeypatch, capsys):
+    """Test the 'help' command's fallback when OperationFactory fails."""
+    inputs = iter(['help', 'exit'])
+    monkeypatch.setattr('builtins.input', lambda _: next(inputs))
+    monkeypatch.setattr('app.calculator.Calculator.save_history', MagicMock())
+
+    # Patch the OperationFactory to raise an exception
+    monkeypatch.setattr('app.calculatorUI.OperationFactory.list_operations', MagicMock(side_effect=Exception("Factory error")))
+
+    calculatorUI.calculator_repl()
+
+    captured = capsys.readouterr()
+    # Check that the fallback help text is displayed
+    assert "add, subtract, multiply, divide, power, root" in captured.out
 
 
 def test_repl_history_command(monkeypatch, capsys):
