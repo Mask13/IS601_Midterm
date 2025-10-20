@@ -10,11 +10,14 @@ A robust and feature-rich command-line calculator application built with Python.
 - **High-Precision Arithmetic**: Utilizes Python's `Decimal` type for accurate calculations, avoiding common floating-point errors.
 - **Extensible Operations**: A factory pattern allows for easy addition of new arithmetic operations. Currently supported operations include:
   - `add`, `subtract`, `multiply`, `divide`
-  - `power`, `root`
+  - `power`, `root`, `modulus`, `integer-division`, `percent`, `absolute-difference`
 - **Calculation History**:
   - Automatically saves calculation history.
   - Load, show, and clear history.
   - History is persisted to a CSV file (`history/calculator_history.csv`).
+- **Undo/Redo Functionality**:
+  - `undo` the last calculation or `clear` command.
+  - `redo` the last undone action.
 - **Robust Input Validation**: Ensures all user inputs are valid numbers and within configurable limits before processing.
 - **Configuration via Environment**: Application settings can be managed using a `.env` file or environment variables.
 - **Logging**: Detailed logging of operations and errors to `logs/calculator.log` for diagnostics and debugging.
@@ -34,10 +37,12 @@ A robust and feature-rich command-line calculator application built with Python.
 │   ├── history.py
 │   ├── InputValidator.py
 │   └── operations.py
-├── tests/                # Test suite for the application
-│   ├── test_history.py
-│   ├── test_operations.py
-│   └── test_validators.py
+├── tests/                # Test suite
+│   ├── test_calculator.py
+│   ├── test_calculator_ui.py
+│   ├── test_history.py      
+│   ├── test_operations.py   
+│   └── test_validators.py   
 ├── .github/              # GitHub Actions workflows
 │   └── workflows/
 │       └── ci.yml
@@ -94,6 +99,9 @@ CALCULATOR_PRECISION=10
 # Maximum value for input numbers
 CALCULATOR_MAX_INPUT_VALUE=1e999
 
+# Default encoding for file operations
+CALCULATOR_DEFAULT_ENCODING=utf-8
+
 # Whether to persist history clearing by default (true/false)
 CALCULATOR_CLEAR_PERSIST=false
 
@@ -102,12 +110,6 @@ CALCULATOR_LOG_DIR=logs
 
 # Directory for history files
 CALCULATOR_HISTORY_DIR=history
-
-# Directory for data files
-CALCULATOR_DATA_DIR=data
-
-# Directory for test files
-CALCULATOR_TEST_DIR=tests
 ```
 
 ## Usage
