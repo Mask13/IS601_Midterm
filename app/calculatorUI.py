@@ -106,7 +106,7 @@ def calculator_repl():
                         print(f"Error loading history: {e}")
                     continue # pragma: no cover
 
-                if command in ['add', 'subtract', 'multiply', 'divide', 'power', 'root']:
+                if command in OperationFactory.list_operations():
                     # Perform the specified arithmetic operation
                     try:
                         print("\nEnter numbers (or 'cancel' to abort):")
